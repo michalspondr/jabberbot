@@ -6,7 +6,11 @@
 
 from sleekxmpp import ClientXMPP    # install python3-sleekxmpp
 import json
+import logging
+
 from time import sleep
+from optparse import OptionParser
+
 
 class MUCBot(ClientXMPP):
     def __init__(self, jid, password, room, nick):
@@ -92,7 +96,49 @@ class MUCBot(ClientXMPP):
 
 
 if __name__ == '__main__':
-    xmpp = MUCBot('jid@server.xx', 'boticka', 'room@chat.jabb.im', 'bot')
+    # Setup the command line arguments
+    optp = OptionParser()
+
+    # Output verbosity options
+    optp.add_option('-q', '--quiet', help='set logging to ERROR',
+                    action='store_const', dest='loglevel',
+                    const=logging.ERROR, default=logging.INFO)
+    optp.add_option('-d', '--debug', help='set logging to DEBUG',
+                    action='store_const', dest='loglevel',
+                    const=logging.DEBUG, default=logging.INFO)
+    optp.add_option('-v', '--verbose', help='set logging to COMM',
+                    action='store_const', dest='loglevel',
+                    const=5, default=logging.INFO)
+
+    # JID and password options
+    optp.add_option("-j", "--jid", dest="jid",
+                    help="JID to use")
+    optp.add_option("-p", "--password", dest="password",
+                    help="password to use")
+    optp.add_option("-r", "--room", dest="room",
+                    help="MUC room to join")
+    optp.add_option("-n", "--nick", dest="nick",
+                    help="MUC nickname")
+    opts, args = optp.parse_args()
+
+    # Setup logging
+    logging.basicConfig(level=opts.loglevel,
+                        format='%(levelname)-8s %(message)s')
+
+    if opts.jid is None:
+        opts.jid = raw_input("Username: ")
+    if opts.password is None:
+        opts.password = getpass.getpass("Password: ")
+    if opts.room is None:
+        opts.room = raw_input("MUC room: ")
+    if opts.nick is None:
+        opts.nick = raw_input("MUC nickname: ")
+
+    print(opts.jid)
+    print(opts.password)
+    print(opts.room)
+    print(opts.nick)
+    xmpp = MUCBot(opts.jid, opts.password, opts.room, opts.nick)
 #   xmpp.register_plugin('xep_0030')    # Service Discovery
     xmpp.register_plugin('xep_0045')    # MUC
     xmpp.register_plugin('xep_0199')    # XMPP ping
