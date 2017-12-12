@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python3.5
 
 # Simple jabber bot
 # Just for my studying purposes
@@ -10,6 +10,61 @@ import logging
 
 from time import sleep
 from optparse import OptionParser
+
+#load plugins
+
+class Standup:
+    def __init__(self, bot, msg):
+        self.bot = bot
+        self.msg = msg
+
+    def execute(self):
+        message = self.msg['body'][1:].split()
+        msg_type = len(message)
+
+        standup_status={}
+
+        try:
+            with open('standup.data', 'r') as infile:
+                standup_status = json.load(infile)
+        except Exception as e:
+            print(e)
+
+        if msg_type == 1:
+            for key, value in standup_status.items():
+                self.bot.send_message(mto=self.msg['from'].bare,
+                        mbody='%s : %s' % (key, value),
+                        mtype='groupchat')
+                sleep(1)    # we don't want to spam
+        elif msg_type == 2:
+            if message[1] in standup_status:
+                user = message[1]
+                status = standup_status[message[1]]
+                self.bot.send_message(mto=self.msg['from'].bare,
+                        mbody='%s : %s' % (user, status),
+                        mtype='groupchat')
+            else:
+                self.bot.send_message(mto=self.msg['from'].bare,
+                        mbody='No standup status for %s' % message[1],
+                        mtype='groupchat')
+        else:
+            standup_status[message[1]] = ' '.join(message[2:])
+            with open('standup.data', 'w') as outfile:
+                json.dump(standup_status, outfile)
+            
+            self.bot.send_message(mto=self.msg['from'].bare,
+                    mbody='Standup status stored for %s' % message[1],
+                    mtype='groupchat')
+
+class Help:
+    def __init__(self, bot, msg):
+        self.bot = bot
+        self.msg = msg
+
+    def execute(self):
+        #TODO
+        pass
+        
 
 
 class MUCBot(ClientXMPP):
@@ -44,56 +99,18 @@ class MUCBot(ClientXMPP):
                                   mbody='%s : Funguju' % msg['mucnick'],
                                   mtype='groupchat')
             elif command == 'standup':
-                self.standup(msg)
+                Standup(self, msg).execute()
             else:
                 self.help(msg)
 
         except Exception as e:
             print(e)
 
-    def standup(self, msg):
-        message = msg['body'][1:].split()
-        msg_type = len(message)
-
-        standup_status={}
-
-        try:
-            with open('standup.data', 'r') as infile:
-                standup_status = json.load(infile)
-        except Exception as e:
-            print(e)
-
-        if msg_type == 1:
-            for key, value in standup_status.items():
-                self.send_message(mto=msg['from'].bare,
-                        mbody='%s : %s' % (key, value),
-                        mtype='groupchat')
-                sleep(1)    # we don't want spam
-        elif msg_type == 2:
-            if message[1] in standup_status:
-                user = message[1]
-                status = standup_status[message[1]]
-                self.send_message(mto=msg['from'].bare,
-                        mbody='%s : %s' % (user, status),
-                        mtype='groupchat')
-            else:
-                self.send_message(mto=msg['from'].bare,
-                        mbody='No standup status for %s' % message[1],
-                        mtype='groupchat')
-        else:
-            standup_status[message[1]] = ' '.join(message[2:])
-            with open('standup.data', 'w') as outfile:
-                json.dump(standup_status, outfile)
-            
-            self.send_message(mto=msg['from'].bare,
-                    mbody='Standup status stored for %s' % message[1],
-                    mtype='groupchat')
-
     def help(self, msg):
         self.send_message(mto=msg['from'].bare,
                 mbody='Až to bude hotový, bude tady help',
                 mtype='groupchat')
-
+    
 
 if __name__ == '__main__':
     # Setup the command line arguments
