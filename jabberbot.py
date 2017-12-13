@@ -1,88 +1,16 @@
-#!/usr/bin/python3
+#!/usr/bin/python3.5
 
 # Simple jabber bot
 # Just for my studying purposes
 # In the future it could help us with our projects
 
 from sleekxmpp import ClientXMPP    # install python3-sleekxmpp
-import json
 import logging
-
-from time import sleep
 from optparse import OptionParser
 
 #load plugins
-
-class Plugin:
-    def __init__(self, bot, msg):
-        self.bot = bot
-        self.msg = msg
-
-    # this is executed when a command is called
-    def execute(self):
-        raise NotImplementedError()
-
-    # returns a string with help for specific plugin
-    def get_help(self):
-        raise NotImplementedError()
-
-
-class Standup(Plugin):
-    def __init__(self, bot, msg):
-        Plugin.__init__(self, bot, msg)
-
-    def get_help(self):
-        return str('!standup [<what am I doing>]. Bez parametru vypíše statusy všech přihlášených uživatelů. Parametr <what am I doing> uloží status pro uživatele, který ho napsal')
-
-    def execute(self):
-        message = self.msg['body'][1:].split()
-        msg_type = len(message)
-
-        standup_status={}
-
-        try:
-            with open('standup.data', 'r') as infile:
-                standup_status = json.load(infile)
-        except Exception as e:
-            print(e)
-
-        if msg_type == 1:
-            for key, value in standup_status.items():
-                # if key in MUC users
-                self.bot.send_message(mto=self.msg['from'].bare,
-                        mbody='%s : %s' % (key, value),
-                        mtype='groupchat')
-                sleep(self.bot.message_delay)    # we don't want to spam
-        elif msg_type == 2:
-            if message[1] in standup_status:
-                user = message[1]
-                status = standup_status[message[1]]
-                self.bot.send_message(mto=self.msg['from'].bare,
-                        mbody='%s : %s' % (user, status),
-                        mtype='groupchat')
-            else:
-                self.bot.send_message(mto=self.msg['from'].bare,
-                        mbody='No standup status for %s' % message[1],
-                        mtype='groupchat')
-        else:
-            standup_status[message[1]] = ' '.join(message[2:])
-            with open('standup.data', 'w') as outfile:
-                json.dump(standup_status, outfile)
-            
-            self.bot.send_message(mto=self.msg['from'].bare,
-                    mbody='Standup status stored for %s' % message[1],
-                    mtype='groupchat')
-
-
-class Help(Plugin):
-    def __init__(self, bot, msg):
-        Plugin.__init__(self, bot, msg)
-
-    def execute(self):
-        self.bot.send_message(mto=self.msg['from'].bare,
-                mbody='Až to bude hotový, bude tady help',
-                mtype='groupchat')
-
+from plugins import Help
+from plugins import Standup
 
 class MUCBot(ClientXMPP):
     def __init__(self, jid, password, room, nick, message_delay):
@@ -118,9 +46,9 @@ class MUCBot(ClientXMPP):
                                   mbody='%s : Funguju' % msg['mucnick'],
                                   mtype='groupchat')
             elif command == 'standup':
-                Standup(self, msg).execute()
+                Standup.Standup(self, msg).execute()
             else:
-                Help(self, msg).execute()
+                Help.Help(self, msg).execute()
 
         except Exception as e:
             print(e)
