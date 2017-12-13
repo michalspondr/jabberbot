@@ -1,4 +1,4 @@
-#!/usr/bin/python3.5
+#!/usr/bin/python3
 
 # Simple jabber bot
 # Just for my studying purposes
@@ -13,10 +13,26 @@ from optparse import OptionParser
 
 #load plugins
 
-class Standup:
+class Plugin:
     def __init__(self, bot, msg):
         self.bot = bot
         self.msg = msg
+
+    # this is executed when a command is called
+    def execute(self):
+        raise NotImplementedError()
+
+    # returns a string with help for specific plugin
+    def get_help(self):
+        raise NotImplementedError()
+
+
+class Standup(Plugin):
+    def __init__(self, bot, msg):
+        Plugin.__init__(self, bot, msg)
+
+    def get_help(self):
+        return str('!standup [<what am I doing>]. Bez parametru vypíše statusy všech přihlášených uživatelů. Parametr <what am I doing> uloží status pro uživatele, který ho napsal')
 
     def execute(self):
         message = self.msg['body'][1:].split()
@@ -32,10 +48,11 @@ class Standup:
 
         if msg_type == 1:
             for key, value in standup_status.items():
+                # if key in MUC users
                 self.bot.send_message(mto=self.msg['from'].bare,
                         mbody='%s : %s' % (key, value),
                         mtype='groupchat')
-                sleep(1)    # we don't want to spam
+                sleep(self.bot.message_delay)    # we don't want to spam
         elif msg_type == 2:
             if message[1] in standup_status:
                 user = message[1]
@@ -56,23 +73,25 @@ class Standup:
                     mbody='Standup status stored for %s' % message[1],
                     mtype='groupchat')
 
-class Help:
+
+class Help(Plugin):
     def __init__(self, bot, msg):
-        self.bot = bot
-        self.msg = msg
+        Plugin.__init__(self, bot, msg)
 
     def execute(self):
-        #TODO
-        pass
-        
+        self.bot.send_message(mto=self.msg['from'].bare,
+                mbody='Až to bude hotový, bude tady help',
+                mtype='groupchat')
 
 
 class MUCBot(ClientXMPP):
-    def __init__(self, jid, password, room, nick):
+    def __init__(self, jid, password, room, nick, message_delay):
         ClientXMPP.__init__(self, jid, password)
 
         self.room = room
         self.nick = nick
+
+        self.message_delay = message_delay
 
         self.add_event_handler('session_start', self.start)
         self.add_event_handler('groupchat_message', self.muc_message)
@@ -101,16 +120,11 @@ class MUCBot(ClientXMPP):
             elif command == 'standup':
                 Standup(self, msg).execute()
             else:
-                self.help(msg)
+                Help(self, msg).execute()
 
         except Exception as e:
             print(e)
 
-    def help(self, msg):
-        self.send_message(mto=msg['from'].bare,
-                mbody='Až to bude hotový, bude tady help',
-                mtype='groupchat')
-    
 
 if __name__ == '__main__':
     # Setup the command line arguments
@@ -126,6 +140,9 @@ if __name__ == '__main__':
     optp.add_option('-v', '--verbose', help='set logging to COMM',
                     action='store_const', dest='loglevel',
                     const=5, default=logging.INFO)
+
+    optp.add_option('-s', '--no-spam', dest="nospam",
+                    help='time interval between sending multi-row messages')
 
     # JID and password options
     optp.add_option("-j", "--jid", dest="jid",
@@ -151,11 +168,14 @@ if __name__ == '__main__':
     if opts.nick is None:
         opts.nick = raw_input("MUC nickname: ")
 
-    print(opts.jid)
-    print(opts.password)
-    print(opts.room)
-    print(opts.nick)
-    xmpp = MUCBot(opts.jid, opts.password, opts.room, opts.nick)
+    if opts.nospam is None:
+        opts.nospam = 0
+    try:
+        opts.nospam = int(opts.nospam)
+    except ValueError:
+        opts.nospam = 0
+
+    xmpp = MUCBot(opts.jid, opts.password, opts.room, opts.nick, opts.nospam)
 #   xmpp.register_plugin('xep_0030')    # Service Discovery
     xmpp.register_plugin('xep_0045')    # MUC
     xmpp.register_plugin('xep_0199')    # XMPP ping
