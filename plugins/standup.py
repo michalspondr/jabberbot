@@ -1,11 +1,11 @@
-from plugins import Plugin
+from plugins import plugin
 
 import json
 from time import sleep
 
-class Standup(Plugin.Plugin):
+class Standup(plugin.Plugin):
     def __init__(self, bot, msg):
-        Plugin.Plugin.__init__(self, bot, msg)
+        plugin.Plugin.__init__(self, bot, msg)
 
     def get_help(self):
         return str('!standup [<what am I doing>]. Bez parametru vypíše statusy všech přihlášených uživatelů. Parametr <what am I doing> uloží status pro uživatele, který ho napsal')

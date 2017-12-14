@@ -1,4 +1,4 @@
-#!/usr/bin/python3.5
+#!/usr/bin/python3
 
 # Simple jabber bot
 # Just for my studying purposes
@@ -9,8 +9,8 @@ import logging
 from optparse import OptionParser
 
 #load plugins
-from plugins import Help
-from plugins import Standup
+from plugins.help import Help
+from plugins.standup import Standup
 
 class MUCBot(ClientXMPP):
     def __init__(self, jid, password, room, nick, message_delay):
@@ -46,9 +46,9 @@ class MUCBot(ClientXMPP):
                                   mbody='%s : Funguju' % msg['mucnick'],
                                   mtype='groupchat')
             elif command == 'standup':
-                Standup.Standup(self, msg).execute()
+                Standup(self, msg).execute()
             else:
-                Help.Help(self, msg).execute()
+                Help(self, msg).execute()
 
         except Exception as e:
             print(e)
