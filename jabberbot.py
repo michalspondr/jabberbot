@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python3.5
 
 # Simple jabber bot
 # Just for my studying purposes
@@ -53,8 +53,9 @@ class MUCBot(ClientXMPP):
         except Exception as e:
             print(e)
 
-
-if __name__ == '__main__':
+# Parse command-line parameters
+# If some of them are not provided ask interactively
+def parseOptions():
     # Setup the command line arguments
     optp = OptionParser()
 
@@ -102,6 +103,13 @@ if __name__ == '__main__':
         opts.nospam = int(opts.nospam)
     except ValueError:
         opts.nospam = 0
+
+    return opts
+
+
+if __name__ == '__main__':
+
+    opts = parseOptions()
 
     xmpp = MUCBot(opts.jid, opts.password, opts.room, opts.nick, opts.nospam)
 #   xmpp.register_plugin('xep_0030')    # Service Discovery
