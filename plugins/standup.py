@@ -7,7 +7,7 @@ class Standup(plugin.Plugin):
     def __init__(self, bot, msg):
         plugin.Plugin.__init__(self, bot, msg)
 
-    def get_help(self):
+    def get_help():
         return str('!standup [<what am I doing>]. Bez parametru vypíše statusy všech přihlášených uživatelů. Parametr <what am I doing> uloží status pro uživatele, který ho napsal')
 
     def execute(self):

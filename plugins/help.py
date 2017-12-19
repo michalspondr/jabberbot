@@ -6,6 +6,8 @@ class Help(plugin.Plugin):
 
     def execute(self):
         self.bot.send_message(mto=self.msg['from'].bare,
-                mbody='Až to bude hotový, bude tady help',
+                mbody=self.get_help(),
                 mtype='groupchat')
 
+    def get_help(self):
+        return '!help [nazev_pluginu] - bez parametru vrátí seznam všech dostupných pluginů, s parametrem vypíše nápovědu k tomuto pluginu'

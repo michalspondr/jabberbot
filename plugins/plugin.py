@@ -7,8 +7,8 @@ class Plugin:
     def execute(self):
         raise NotImplementedError()
 
-    # returns a string with help for specific plugin
-    def get_help(self):
+    # returns a string with parameter description for specific plugin
+    def get_help():
         raise NotImplementedError()
 
 

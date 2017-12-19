@@ -11,6 +11,9 @@ from optparse import OptionParser
 #load plugins
 from plugins.help import Help
 from plugins.standup import Standup
+from plugins.jira import Jira
+
+plugins = [Help, Standup, Jira]
 
 class MUCBot(ClientXMPP):
     def __init__(self, jid, password, room, nick, message_delay):
@@ -53,8 +56,7 @@ class MUCBot(ClientXMPP):
         except Exception as e:
             print(e)
 
-
-if __name__ == '__main__':
+def parseOptions():
     # Setup the command line arguments
     optp = OptionParser()
 
@@ -103,6 +105,14 @@ if __name__ == '__main__':
     except ValueError:
         opts.nospam = 0
 
+    return opts
+
+
+if __name__ == '__main__':
+    # parse options from command line (or enter them manually)
+    opts = parseOptions()
+
+    # prepare bot and run it
     xmpp = MUCBot(opts.jid, opts.password, opts.room, opts.nick, opts.nospam)
 #   xmpp.register_plugin('xep_0030')    # Service Discovery
     xmpp.register_plugin('xep_0045')    # MUC
